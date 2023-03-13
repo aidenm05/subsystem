@@ -60,17 +60,17 @@ public class Arm extends SubsystemBase {
    wrist.configReverseSoftLimitEnable(true); 
     
  // //Configure Kp, Ki, Kd----------------------------------------------------------------------------------------------------------------------------------------
- shoudler.config_kP(0, Constants.turret_kP);
- shoudler.config_kI(0, Constants.turret_kI);
- shoulder.config_kD(0, Constants.turret_kD);
+ shoudler.config_kP(0, );
+ shoudler.config_kI(0, );
+ shoulder.config_kD(0, );
 
- elevator.config_kP(0, Constants.turret_kP);
- elevator.config_kI(0, Constants.turret_kI);
- elevator.config_kD(0, Constants.turret_kD);
+ elevator.config_kP(0, );
+ elevator.config_kI(0, );
+ elevator.config_kD(0, );
 
- wrist.config_kP(0, Constants.turret_kP);
- wrist.config_kI(0, Constants.turret_kI);
- wrist.config_kD(0, Constants.turret_kD);
+ wrist.config_kP(0, );
+ wrist.config_kI(0, );
+ wrist.config_kD(0, );
     
 //-------------------------------------------------------------------------------------------------------------------------------------------------------//-------------------------------------------------------------------------------------------------------------------------------------------------------
   public double getWristPosition(){
