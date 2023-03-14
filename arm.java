@@ -3,7 +3,6 @@ import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
@@ -11,10 +10,11 @@ import frc.robot.Constants;
 public class Arm extends SubsystemBase {
   
  private WPI_TalonFX wrist;
+  private WPI_TalonFX wrist2;
  private WPI_TalonFX elevator;
  private WPI_TalonFX shoulder;
  public static Arm currentInstance;
- private DigitalInput topLimit;
+ private DutyCycleEncoder shoulderabsoluteencoder;
  private DigitalInput bottomLimit;
 //--------------------------------------------------------------------------------------------------------------------------------
 
@@ -22,7 +22,8 @@ public class Arm extends SubsystemBase {
     shoulder = = new WPI_TalonFX(Constants.shoulderID);
     elevator = new WPI_TalonFX(Constants.elevatorID);
     wrist = new WPI_TalonFX(Constants.wristID);
-    topLimit = new DigitalInput(Constants.topLimitPort);
+    wrist2 = new WPI_TalonFX(Constants.wrist2ID);
+    shoulderabsoluteencoder = new DutyCycleEncoder(Constants.shoulderAbsoluteEncoderPort);
     bottomLimit = new DigitalInput(Constants.bottomLimitPort);
     
  //--------------------------------------------------------------------------------------------------------------------------------
@@ -30,34 +31,40 @@ public class Arm extends SubsystemBase {
     shoulder.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
     elevator.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
     wrist.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
+    wrist2.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
     
  //--------------------------------------------------------------------------------------------------------------------------------
     
     shoulder.setSelectedSensorPosition(0);
     elevator.setSelectedSensorPosition(0);
     wrist.setSelectedSensorPosition(0);
+    wrist2.setSelectedSensorPosition(0);
 
  // soft limits forward----------------------------------------------------------------------------------------------------------------------------------------
     
     shoudler.configForwardSoftLimitThreshold(degreesToTicks());
     elevator.configForwardSoftLimitThreshold(degreesToTicks());
     wrist.configForwardSoftLimitThreshold(degreesToTicks());
+    wrist2.configForwardSoftLimitThreshold(degreesToTicks());
     
  // soft limits reverse----------------------------------------------------------------------------------------------------------------------------------------
     
     shoulder.configReverseSoftLimitThreshold(degreesToTicks());
     elevator.configReverseSoftLimitThreshold(degreesToTicks());
     wrist.configReverseSoftLimitThreshold(degreesToTicks());
+    wrist2.configReverseSoftLimitThreshold(degreesToTicks());
     
  // enable forward limits----------------------------------------------------------------------------------------------------------------------------------------
     shoudler.configForwardSoftLimitEnable(true); 
     elevator.configForwardSoftLimitEnable(true); 
     wrist.configForwardSoftLimitEnable(true); 
+    wrist2.configForwardSoftLimitEnable(true); 
     
  // enable reverse limits---------------------------------------------------------------------------------------------------------------------------------------
    shoudler.configReverseSoftLimitEnable(true); 
    elevator.configReverseSoftLimitEnable(true); 
    wrist.configReverseSoftLimitEnable(true); 
+   wrist2.configReverseSoftLimitEnable(true); 
     
  // //Configure Kp, Ki, Kd----------------------------------------------------------------------------------------------------------------------------------------
  shoudler.config_kP(0, );
@@ -71,9 +78,16 @@ public class Arm extends SubsystemBase {
  wrist.config_kP(0, );
  wrist.config_kI(0, );
  wrist.config_kD(0, );
+
+ wrist2.config_kP(0, );
+ wrist2.config_kI(0, );
+ wrist2.config_kD(0, );
     
 //-------------------------------------------------------------------------------------------------------------------------------------------------------//-------------------------------------------------------------------------------------------------------------------------------------------------------
   public double getWristPosition(){
+    return ticksToDegrees(wrist.getSelectedSensorPosition());
+  }
+    public double getWrist2Position(){
     return ticksToDegrees(wrist.getSelectedSensorPosition());
   }
   public double getElevatorPosition(){
@@ -98,7 +112,9 @@ public class Arm extends SubsystemBase {
   public void setElevatorSpeed(double espeed){
   elevator.set(ControlMode.PercentOutput, espeed);
   }
-    
+  public void setWristSpeed(double speed){
+  wrist2.set(ControlMode.PercentOutput, speed);
+  }  
 //-------------------------------------------------------------------------------------------------------------------------------------------------------
 /* * set the reference position for the should and wrist simulataniously
    * @param shoulderPosition - the position of the shoulder in degrees with 0 being stowed flate
@@ -109,6 +125,7 @@ public class Arm extends SubsystemBase {
 
 public void setArmPosition(double wdegrees, double edegrees, double sdegrees){
     wrist.set(ControlMode.Position, degreesToTicks(wdegrees));
+    wrist.set(ControlMode.Position, degreesToTicks(w2degrees));
     shoulder.set(ControlMode.Position, degreesToTicks(sdegrees));
     elevator.set(ControlMode.Position, degreesToTicks(edegrees));
 }
@@ -169,4 +186,3 @@ public void periodic() {
 }
   
 }
-
