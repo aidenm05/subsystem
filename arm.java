@@ -1,188 +1,261 @@
-
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
-import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
-import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
 
+import edu.wpi.first.wpilibj.DigitalInput;
+import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import frc.robot.Constants;
 
 public class Arm extends SubsystemBase {
   
- private WPI_TalonFX wrist;
+  private WPI_TalonFX shoulder;
+  private WPI_TalonFX elevator;
+  private WPI_TalonFX wrist;
   private WPI_TalonFX wrist2;
- private WPI_TalonFX elevator;
- private WPI_TalonFX shoulder;
- public static Arm currentInstance;
- private DutyCycleEncoder shoulderabsoluteencoder;
- private DigitalInput bottomLimit;
-//--------------------------------------------------------------------------------------------------------------------------------
-
+  private DutyCycleEncoder shoulderAbsoluteEncoder;
+  private DigitalInput bottomLimit;
+  
+  private static Arm instance;
+  
   public Arm() {
-    shoulder = = new WPI_TalonFX(Constants.shoulderID);
+    shoulder = new WPI_TalonFX(Constants.shoulderID);
     elevator = new WPI_TalonFX(Constants.elevatorID);
     wrist = new WPI_TalonFX(Constants.wristID);
     wrist2 = new WPI_TalonFX(Constants.wrist2ID);
-    shoulderabsoluteencoder = new DutyCycleEncoder(Constants.shoulderAbsoluteEncoderPort);
+    shoulderAbsoluteEncoder = new DutyCycleEncoder(Constants.shoulderAbsoluteEncoderPort);
     bottomLimit = new DigitalInput(Constants.bottomLimitPort);
     
- //--------------------------------------------------------------------------------------------------------------------------------
-  
+    // Set motor types and feedback devices
+    shoulder.configFactoryDefault();
     shoulder.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
+    elevator.configFactoryDefault();
     elevator.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
+    wrist.configFactoryDefault();
     wrist.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
+    wrist2.configFactoryDefault();
     wrist2.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
     
- //--------------------------------------------------------------------------------------------------------------------------------
+    // Set PIDF constants
+    shoulder.config_kP(0, Constants.shoulderKP);
+    shoulder.config_kI(0, Constants.shoulderKI);
+    shoulder.config_kD(0, Constants.shoulderKD);
+    elevator.config_kP(0, Constants.elevatorKP);
+    elevator.config_kI(0, Constants.elevatorKI);
+    elevator.config_kD(0, Constants.elevatorKD);
+    wrist.config_kP(0, Constants.wristKP);
+    wrist.config_kI(0, Constants.wristKI);
+    wrist.config_kD(0, Constants.wristKD);
+    wrist2.config_kP(0, Constants.wrist2KP);
+    wrist2.config_kI(0, Constants.wrist2KI);
+    wrist2.config_kD(0, Constants.wrist2KD);
     
-    shoulder.setSelectedSensorPosition(0);
-    elevator.setSelectedSensorPosition(0);
-    wrist.setSelectedSensorPosition(0);
-    wrist2.setSelectedSensorPosition(0);
-
- // soft limits forward----------------------------------------------------------------------------------------------------------------------------------------
+    // Set soft limits and enable them
+    shoulder.configForwardSoftLimitThreshold(degreesToTicks(Constants.shoulderForwardSoftLimit));
+    elevator.configForwardSoftLimitThreshold(degreesToTicks(Constants.elevatorForwardSoftLimit));
+    wrist.configForwardSoftLimitThreshold(degreesToTicks(Constants.wristForwardSoftLimit));
+    wrist2.configForwardSoftLimitThreshold(degreesToTicks(Constants.wrist2ForwardSoftLimit));
+    shoulder.configReverseSoftLimitThreshold(degreesToTicks(Constants.shoulderReverseSoftLimit));
+    elevator.configReverseSoftLimitThreshold(degreesToTicks(Constants.elevatorReverseSoftLimit));
+    wrist.configReverseSoftLimitThreshold(degreesToTicks(Constants.wristReverseSoftLimit));
+    wrist2.configReverseSoftLimitThreshold(degreesToTicks(Constants.wrist2ReverseSoftLimit));
+    shoulder.configForwardSoftLimitEnable(true);
+    elevator.configForwardSoftLimitEnable(true);
+    wrist.configForwardSoftLimitEnable(true);
+    wrist2.configForwardSoftLimitEnable(true);
+    shoulder.configReverseSoftLimitEnable(true);
+    elevator.configReverseSoftLimitEnable(true);
+    wrist.configReverseSoftLimitEnable(true);
+    wrist2.configReverseSoftLimitEnable(true);
     
-    shoudler.configForwardSoftLimitThreshold(degreesToTicks());
-    elevator.configForwardSoftLimitThreshold(degreesToTicks());
-    wrist.configForwardSoftLimitThreshold(degreesToTicks());
-    wrist2.configForwardSoftLimitThreshold(degreesToTicks());
-    
- // soft limits reverse----------------------------------------------------------------------------------------------------------------------------------------
-    
-    shoulder.configReverseSoftLimitThreshold(degreesToTicks());
-    elevator.configReverseSoftLimitThreshold(degreesToTicks());
-    wrist.configReverseSoftLimitThreshold(degreesToTicks());
-    wrist2.configReverseSoftLimitThreshold(degreesToTicks());
-    
- // enable forward limits----------------------------------------------------------------------------------------------------------------------------------------
-    shoudler.configForwardSoftLimitEnable(true); 
-    elevator.configForwardSoftLimitEnable(true); 
-    wrist.configForwardSoftLimitEnable(true); 
-    wrist2.configForwardSoftLimitEnable(true); 
-    
- // enable reverse limits---------------------------------------------------------------------------------------------------------------------------------------
-   shoudler.configReverseSoftLimitEnable(true); 
-   elevator.configReverseSoftLimitEnable(true); 
-   wrist.configReverseSoftLimitEnable(true); 
-   wrist2.configReverseSoftLimitEnable(true); 
-    
- // //Configure Kp, Ki, Kd----------------------------------------------------------------------------------------------------------------------------------------
- shoudler.config_kP(0, );
- shoudler.config_kI(0, );
- shoulder.config_kD(0, );
-
- elevator.config_kP(0, );
- elevator.config_kI(0, );
- elevator.config_kD(0, );
-
- wrist.config_kP(0, );
- wrist.config_kI(0, );
- wrist.config_kD(0, );
-
- wrist2.config_kP(0, );
- wrist2.config_kI(0, );
- wrist2.config_kD(0, );
-    
-//-------------------------------------------------------------------------------------------------------------------------------------------------------//-------------------------------------------------------------------------------------------------------------------------------------------------------
-  public double getWristPosition(){
-    return ticksToDegrees(wrist.getSelectedSensorPosition());
+    // Set neutral mode for motors
+    shoulder.setNeutralMode(NeutralMode.Brake);
+    elevator.setNeutralMode(NeutralMode.Brake);
+    wrist.setNeutralMode(NeutralMode.Brake);
+    wrist2.setNeutralMode(NeutralMode.Brake);
   }
-    public double getWrist2Position(){
-    return ticksToDegrees(wrist.getSelectedSensorPosition());
+  
+  public static synchronized Arm getInstance() {
+    if (instance == null) {
+      instance = new Arm();
+    }
+    return instance;
   }
-  public double getElevatorPosition(){
-    return ticksToDegrees(elevator.getSelectedSensorPosition());
-  }
-  public double getShoulderPosition(){
+  
+  public double getShoulderPosition() {
     return ticksToDegrees(shoulder.getSelectedSensorPosition());
   }
-    
-//-------------------------------------------------------------------------------------------------------------------------------------------------------
-   public boolean getBottomLimits() {
+  
+  public double getElevatorPosition() {
+    return ticksToDegrees(elevator.getSelectedSensorPosition());
+  }
+  
+  public double getWristPosition() {
+    return ticksToDegrees(wrist.getSelectedSensorPosition());
+  }
+  
+  public double getWrist2Position() {
+    return ticksToDegrees(wrist2.getSelectedSensorPosition());
+  }
+  
+  public boolean getBottomLimit() {
     return !bottomLimit.get();
   }
-    
-//-------------------------------------------------------------------------------------------------------------------------------------------------------
-  public void setShoudlerSpeed(double speed){
-  shoulder.set(ControlMode.PercentOutput, speed);
+  
+  public void setShoulderSpeed(double speed) {
+    shoulder.set(ControlMode.PercentOutput, speed);
   }
-  public void setWristSpeed(double speed){
-  wrist.set(ControlMode.PercentOutput, speed);
+  
+  public void setElevatorSpeed(double speed) {
+    elevator.set(ControlMode.PercentOutput, speed);
   }
-  public void setElevatorSpeed(double espeed){
-  elevator.set(ControlMode.PercentOutput, espeed);
+  
+  public void setWristSpeed(double speed) {
+    wrist.set(ControlMode.PercentOutput, speed);
   }
-  public void setWristSpeed(double speed){
-  wrist2.set(ControlMode.PercentOutput, speed);
-  }  
-//-------------------------------------------------------------------------------------------------------------------------------------------------------
-/* * set the reference position for the should and wrist simulataniously
-   * @param shoulderPosition - the position of the shoulder in degrees with 0 being stowed flate
-   * @param wristPosition - the position of the shoulder in degrees with 0 being stowed vertically
-   * @param elevatorPosition - the position of the shoulder in degrees with 0 being stowed at bottom
- **/
- //-------------------------------------------------------------------------------------------------------------------------------------------------------
-
-public void setArmPosition(double wdegrees, double edegrees, double sdegrees){
-    wrist.set(ControlMode.Position, degreesToTicks(wdegrees));
-    wrist.set(ControlMode.Position, degreesToTicks(w2degrees));
-    shoulder.set(ControlMode.Position, degreesToTicks(sdegrees));
-    elevator.set(ControlMode.Position, degreesToTicks(edegrees));
-}
-    
- //-------------------------------------------------------------------------------------------------------------------------------------------------------
-  // Reset Encoder Method (we may need to take in a position to set the arm at dependant upon which auto we are running)
-    
-  public void resetWrist(){
-    wrist.setSelectedSensorPosition(0);
+  
+  public void setWrist2Speed(double speed) {
+    wrist2.set(ControlMode.PercentOutput, speed);
   }
-   public void resetShoulder(){
+  
+  public void setArmPosition(double shoulderDegrees, double elevatorDegrees, double wristDegrees, double wrist2Degrees) {
+    shoulder.set(ControlMode.Position, degreesToTicks(shoulderDegrees));
+    elevator.set(ControlMode.Position, degreesToTicks(elevatorDegrees));
+    wrist.set(ControlMode.Position, degreesToTicks(wristDegrees));
+    wrist2.set(ControlMode.Position, degreesToTicks(wrist2Degrees));
+  }
+  
+  public void resetShoulder() {
     shoulder.setSelectedSensorPosition(0);
   }
-    public void resetElevator(){
+  
+  public void resetElevator() {
     elevator.setSelectedSensorPosition(0);
   }
-    
- //------------------------------------------------------------------------------------------------------------------------------------------------------- 
-    
- public static void init() {
-  if (currentInstance == null) {
-    currentInstance = new Arm();
-   }
-}
-    
- //-------------------------------------------------------------------------------------------------------------------------------------------------------
-    
-
-  public static Arm getInstance() {
-    init();
-    return currentInstance;
-}
-    
-//-------------------------------------------------------------------------------------------------------------------------------------------------------
-    
-  // ticksToDegrees Method Take in Ticks Return Degrees
-  // ticks / ticksPerRevFalcon / gear Ratio * 360 (I think this math is right)  Return this number
-  public double ticksToDegrees(double ticks){
-    return ticks / Constants.Falcon_Ticks_Per_Rev / Constants.turret_gear_ratio * 360;
-}
-    
-//-------------------------------------------------------------------------------------------------------------------------------------------------------
-    
-  // DegreesToTicks Method
-  // Degrees / 360 * GearRatio * TicksPerRevFalcon (I think this math is right)  Return this number
-  public double degreesToTicks(double degrees){
-    return degrees / 360 * Constants.turret_gear_ratio * Constants.Falcon_Ticks_Per_Rev;
+  
+  public void resetWrist() {
+    wrist.setSelectedSensorPosition(0);
   }
+  
+  public void resetWrist2() {
+    wrist2.setSelectedSensorPosition(0);
+  }
+  
+  public double ticksToDegrees(double ticks) {
+ //   return ticks / Constants.Falcon_Ticks_Per_Rev /  360;
+  }
+  
+  public double degreesToTicks(double degrees) {
+ //   return degrees / 360 *Constants.Falcon_Ticks_Per_Rev;
+  }
+  
+  @Override
+  public void periodic() {
+    SmartDashboard.putNumber("Shoulder Position", shoulderAbsoluteEncoder.get());
+    SmartDashboard.putNumber("Elevator Position", getElevatorPosition());
+    SmartDashboard.putNumber("Wrist Position", getWristPosition());
+    SmartDashboard.putNumber("Wrist2 Position", getWrist2Position());
     
-//-------------------------------------------------------------------------------------------------------------------------------------------------------
-    
-@Override
-public void periodic() {
-    if (getBottomLimits()){
+    if (getBottomLimit()) {
       resetElevator();
-      elevatorMotor.set(ControlMode.PercentOutput, 0);
-    }    
-}
+      elevator.set(ControlMode.PercentOutput, 0);
+    }
+  }
   
 }
+
+// To use these commands in teleop using RobotContainer and Command-based programming, you can create a button on your joystick/gamepad and assign it to the `MoveShoulderCommand` and `MoveElevatorCommand`. 
+
+// Here's an example code snippet in `RobotContainer` class:
+
+// ```
+// public class RobotContainer {
+//   private final Joystick joystick = new Joystick(Constants.joystickPort);
+//   private final Arm arm = new Arm();
+//   private final MoveShoulderCommand moveShoulderCommand = new MoveShoulderCommand(arm);
+//   private final MoveElevatorCommand moveElevatorCommand = new MoveElevatorCommand(arm);
+  
+//   public RobotContainer() {
+//     configureButtonBindings();
+//   }
+  
+//   private void configureButtonBindings() {
+//     final JoystickButton moveShoulderButton = new JoystickButton(joystick, Constants.moveShoulderButton);
+//     moveShoulderButton.whenHeld(moveShoulderCommand);
+    
+//     final JoystickButton moveElevatorButton = new JoystickButton(joystick, Constants.moveElevatorButton);
+//     moveElevatorButton.whenHeld(moveElevatorCommand);
+//   }
+  
+//   public Command getAutonomousCommand() {
+//     // ...
+//   }
+  
+//   public Command getTeleopCommand() {
+//     return null;
+//   }
+// }
+// ```
+
+// Here, we create two `JoystickButton`s and assign them to the `MoveShoulderCommand` and `MoveElevatorCommand` respectively. 
+
+// You can adjust the `Constants.moveShoulderButton` and `Constants.moveElevatorButton` values to match the button numbers on your joystick/gamepad.
+
+// In the `getTeleopCommand` method, you can return `null` since we are using Command-based programming and the commands are already assigned to buttons.
+
+// In `Robot.java`, you can initialize the `RobotContainer` and the arm subsystem as follows:
+
+// ```
+// public class Robot extends TimedRobot {
+//   private RobotContainer robotContainer;
+  
+//   @Override
+//   public void robotInit() {
+//     robotContainer = new RobotContainer();
+//     arm = new Arm();
+//   }
+  
+//   @Override
+//   public void robotPeriodic() {
+//     // ...
+//   }
+
+//   @Override
+//   public void autonomousInit() {
+//     // ...
+//   }
+
+//   @Override
+//   public void autonomousPeriodic() {
+//     // ...
+//   }
+
+//   @Override
+//   public void teleopInit() {
+//     // ...
+//   }
+
+//   @Override
+//   public void teleopPeriodic() {
+//     // ...
+//   }
+
+//   @Override
+//   public void disabledInit() {
+//     // ...
+//   }
+
+//   @Override
+//   public void disabledPeriodic() {
+//     // ...
+//   }
+// }
+// ```
+
+// That's it! Now, when you hold down the assigned joystick/gamepad button, the `MoveShoulderCommand` or `MoveElevatorCommand` will be executed.
