@@ -42,10 +42,8 @@ public class Arm extends SubsystemBase {
     shoulder.configFactoryDefault();
 
 shoulderAbsoluteEncoder.configFactoryDefault();
-shoulderAbsoluteEncoder.configAbsoluteSensorRange(AbsoluteSensorRange.Signed_PlusMinus180);
-shoulderAbsoluteEncoder.setPosition(0.0);
 shoulderAbsoluteEncoder.configSensorDirection(false);
-shoulderAbsoluteEncoder.configMagnetOffset(-zero);
+shoulderAbsoluteEncoder.configMagnetOffset(0);
     
     // Set PIDF constants
    
