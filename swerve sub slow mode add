@@ -1,0 +1,30 @@
+  private boolean isSlowModeEnabled = false;
+  private final double SLOW_MODE_FACTOR = 0.5; // A factor to reduce the input values in slow mode
+  
+  public ChassisSpeeds getTargetSpeeds(double xInput, double yInput, double headingX, double headingY) {
+    // Apply cubic input scaling
+    xInput = Math.pow(xInput, 3);
+    yInput = Math.pow(yInput, 3);
+  
+    // Apply slow mode scaling if enabled
+    if (isSlowModeEnabled) {
+      xInput *= SLOW_MODE_FACTOR;
+      yInput *= SLOW_MODE_FACTOR;
+    }
+  
+    // Get target speeds from swerveController
+    return swerveDrive.swerveController.getTargetSpeeds(xInput, yInput, headingX, headingY, getHeading().getRadians());
+  }
+  
+  // Method to toggle slow mode on/off
+  public void toggleSlowMode() {
+    isSlowModeEnabled = !isSlowModeEnabled;
+    SmartDashboard.putBoolean("Slow Mode Enabled", isSlowModeEnabled);
+
+  }
+    // Create button to toggle slow mode
+    // JoystickButton slowModeButton = new JoystickButton(joystick, Constants.SLOW_MODE_BUTTON);
+
+    // Toggle slow mode when button is pressed
+    // slowModeButton.whenPressed(() -> driveSubsystem.toggleSlowMode());
+  /**
