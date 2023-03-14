@@ -19,7 +19,7 @@ public class Arm extends SubsystemBase {
   private WPI_TalonFX elevator;
   private WPI_TalonFX wrist;
   private WPI_TalonFX wrist2;
-  private DutyCycleEncoder encoder;
+  private DutyCycleEncoder shoulderAbsoluteEncoder;
   private DigitalInput bottomLimit;
   
   private static Arm instance;
@@ -29,7 +29,7 @@ public class Arm extends SubsystemBase {
     elevator = new WPI_TalonFX(Constants.elevatorID);
     wrist = new WPI_TalonFX(Constants.wristID);
     wrist2 = new WPI_TalonFX(Constants.wrist2ID);
-    encoder = new DutyCycleEncoder(Constants.shoulderAbsoluteEncoderPort);
+    shoulderAbsoluteEncoder = new DutyCycleEncoder(Constants.shoulderAbsoluteEncoderPort);
     bottomLimit = new DigitalInput(Constants.bottomLimitPort);
     
     // Set motor types and feedback devices
@@ -41,11 +41,11 @@ public class Arm extends SubsystemBase {
     wrist2.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
     shoulder.configFactoryDefault();
 
-encoder.configFactoryDefault();
-encoder.configAbsoluteSensorRange(AbsoluteSensorRange.Signed_PlusMinus180);
-encoder.setPosition(0.0);
-encoder.configSensorDirection(false);
-encoder.configMagnetOffset(-zero);
+shoulderAbsoluteEncoder.configFactoryDefault();
+shoulderAbsoluteEncoder.configAbsoluteSensorRange(AbsoluteSensorRange.Signed_PlusMinus180);
+shoulderAbsoluteEncoder.setPosition(0.0);
+shoulderAbsoluteEncoder.configSensorDirection(false);
+shoulderAbsoluteEncoder.configMagnetOffset(-zero);
     
     // Set PIDF constants
    
@@ -89,7 +89,7 @@ encoder.configMagnetOffset(-zero);
   }
   
   public double getShoulderPosition() {
-    return (encoder.getSelectedSensorPosition());
+    return (shoulderAbsoluteEncoder.getSelectedSensorPosition());
   }
   
   public double getElevatorPosition() {
@@ -105,13 +105,13 @@ encoder.configMagnetOffset(-zero);
   }
   
   public boolean getBottomLimit() {
-    return !bottomLimit.get();
+    return bottomLimit.get();
   }
   
   public void setShoulderSpeed(double speed) {
     shoulder.set(ControlMode.PercentOutput, speed);
   }
-  
+
   public void setElevatorSpeed(double speed) {
     elevator.set(ControlMode.PercentOutput, speed);
   }
@@ -121,11 +121,11 @@ encoder.configMagnetOffset(-zero);
   }
   
   public void setWrist2Speed(double speed) {
-    wrist2.set(ControlMode.PercentOutput, speed);
+    wrist2.set(ControlMode.PercentOutput, -speed);
   }
   
-  public void setArmPosition(double shoulderDegrees, double elevatorDegrees, double wristDegrees, double wrist2Degrees) {
-    shoulder.set(ControlMode.Position, degreesToTicks(shoulderDegrees));
+  public void setArmPosition( double elevatorDegrees, double wristDegrees, double wrist2Degrees) {
+   // shoulder.set(ControlMode.Position, degreesToTicks(shoulderDegrees));
     elevator.set(ControlMode.Position, degreesToTicks(elevatorDegrees));
     wrist.set(ControlMode.Position, degreesToTicks(wristDegrees));
     wrist2.set(ControlMode.Position, degreesToTicks(wrist2Degrees));
@@ -148,11 +148,11 @@ encoder.configMagnetOffset(-zero);
   }
   
   public double ticksToDegrees(double ticks) {
- //   return ticks / Constants.Falcon_Ticks_Per_Rev /  360;
+   return ticks / Constants.Falcon_Ticks_Per_Rev /  360;
   }
   
   public double degreesToTicks(double degrees) {
- //   return degrees / 360 *Constants.Falcon_Ticks_Per_Rev;
+    return degrees / 360 * Constants.Falcon_Ticks_Per_Rev;
   }
   
   @Override
@@ -162,8 +162,7 @@ encoder.configMagnetOffset(-zero);
     SmartDashboard.putNumber("Wrist Position", getWristPosition());
     SmartDashboard.putNumber("Wrist2 Position", getWrist2Position());
     
-    if (getBottomLimit()) {
-      resetElevator();
+    if (getBottomLimit()) 
       elevator.set(ControlMode.PercentOutput, 0);
     }
   }
