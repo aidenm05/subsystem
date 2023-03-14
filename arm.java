@@ -14,7 +14,12 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants;
 
 public class Arm extends SubsystemBase {
-  
+  private double angleSetpointRadians ;
+    private boolean isOpenLoopRotation = true;
+    private boolean isOpenLooExtension = true;
+    private double extensionSetpoint; 
+
+
   private WPI_TalonFX shoulder;
   private WPI_TalonFX elevator;
   private WPI_TalonFX wrist;
@@ -29,9 +34,14 @@ public class Arm extends SubsystemBase {
     elevator = new WPI_TalonFX(Constants.elevatorID);
     wrist = new WPI_TalonFX(Constants.wristID);
     wrist2 = new WPI_TalonFX(Constants.wrist2ID);
-    shoulderAbsoluteEncoder = new DutyCycleEncoder(Constants.shoulderAbsoluteEncoderPort);
     bottomLimit = new DigitalInput(Constants.bottomLimitPort);
-    
+
+    // Output of encoder
+shoulderAbsoluteEncoder = new DutyCycleEncoder(Constants.shoulderAbsoluteEncoderPort);
+shoulderAbsoluteEncoder.configSensorDirection(false);
+shoulderAbsoluteEncoder.configMagnetOffset(0);
+shoulderAbsoluteEncoder.setDistancePerRotation(0.5);
+
     // Set motor types and feedback devices
     elevator.configFactoryDefault();
     elevator.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
@@ -41,10 +51,7 @@ public class Arm extends SubsystemBase {
     wrist2.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
     shoulder.configFactoryDefault();
 
-shoulderAbsoluteEncoder.configFactoryDefault();
-shoulderAbsoluteEncoder.configSensorDirection(false);
-shoulderAbsoluteEncoder.configMagnetOffset(0);
-    
+
     // Set PIDF constants
    
     elevator.config_kP(0, Constants.elevatorKP);
@@ -71,7 +78,7 @@ shoulderAbsoluteEncoder.configMagnetOffset(0);
     elevator.configReverseSoftLimitEnable(true);
     wrist.configReverseSoftLimitEnable(true);
     wrist2.configReverseSoftLimitEnable(true);
-    
+    wrist2.setinverted(true);
     // Set neutral mode for motors
     shoulder.setNeutralMode(NeutralMode.Coast);
     elevator.setNeutralMode(NeutralMode.Brake);
@@ -87,7 +94,7 @@ shoulderAbsoluteEncoder.configMagnetOffset(0);
   }
   
   public double getShoulderPosition() {
-    return (shoulderAbsoluteEncoder.getSelectedSensorPosition());
+    return (double output);
   }
   
   public double getElevatorPosition() {
@@ -116,11 +123,9 @@ shoulderAbsoluteEncoder.configMagnetOffset(0);
   
   public void setWristSpeed(double speed) {
     wrist.set(ControlMode.PercentOutput, speed);
+    wrist2.set(ControlMode.PercentOutput, speed);
   }
-  
-  public void setWrist2Speed(double speed) {
-    wrist2.set(ControlMode.PercentOutput, -speed);
-  }
+ 
   
   public void setArmPosition( double elevatorDegrees, double wristDegrees, double wrist2Degrees) {
    // shoulder.set(ControlMode.Position, degreesToTicks(shoulderDegrees));
@@ -129,9 +134,6 @@ shoulderAbsoluteEncoder.configMagnetOffset(0);
     wrist2.set(ControlMode.Position, degreesToTicks(wrist2Degrees));
   }
   
-  public void resetShoulder() {
-    shoulder.setSelectedSensorPosition(0);
-  }
   
   public void resetElevator() {
     elevator.setSelectedSensorPosition(0);
@@ -139,26 +141,29 @@ shoulderAbsoluteEncoder.configMagnetOffset(0);
   
   public void resetWrist() {
     wrist.setSelectedSensorPosition(0);
+    wrist2.setSelectedSensorPosition(0);
+
   }
   
-  public void resetWrist2() {
-    wrist2.setSelectedSensorPosition(0);
-  }
+
   
   public double ticksToDegrees(double ticks) {
-   return ticks / Constants.Falcon_Ticks_Per_Rev /  360;
+   return ticks / 2048 / 360;
   }
   
   public double degreesToTicks(double degrees) {
-    return degrees / 360 * Constants.Falcon_Ticks_Per_Rev;
+    return degrees / 360 * 2048;
   }
   
   @Override
   public void periodic() {
-    SmartDashboard.putNumber("Shoulder Position", shoulderAbsoluteEncoder.get());
     SmartDashboard.putNumber("Elevator Position", getElevatorPosition());
     SmartDashboard.putNumber("Wrist Position", getWristPosition());
     SmartDashboard.putNumber("Wrist2 Position", getWrist2Position());
+    SmartDashboard.putNumber("shoulderOutput", output);
+    SmartDashboard.putNumber("ShoudlerDistance", distance);
+    double output = shoulderAbsoluteEncoder.get();
+    double distance = shoulderAbsoluteEncoder.getDistance();
     
     if (getBottomLimit()) 
       elevator.set(ControlMode.PercentOutput, 0);
