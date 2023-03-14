@@ -1,0 +1,25 @@
+public class MoveShoulderToHalfway extends CommandBase {
+
+  private Arm arm;
+  
+  public MoveShoulderToHalfway(Arm arm) {
+    this.arm = arm;
+    addRequirements(arm);
+  }
+  
+  @Override
+  public void initialize() {
+    arm.setShoudlerSpeed(0.5);
+  }
+  
+  @Override
+  public boolean isFinished() {
+    return arm.getShoulderAbsoluteEncoder() >= 0.5;
+  }
+  
+  @Override
+  public void end(boolean interrupted) {
+    arm.setShoudlerSpeed(0);
+  }
+  
+}
