@@ -14,11 +14,6 @@ import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import frc.robot.Constants;
 
 public class Arm extends SubsystemBase {
-  private double angleSetpointRadians ;
-    private boolean isOpenLoopRotation = true;
-    private boolean isOpenLooExtension = true;
-    private double extensionSetpoint; 
-
 
   private WPI_TalonFX shoulder;
   private WPI_TalonFX elevator;
@@ -39,8 +34,8 @@ public class Arm extends SubsystemBase {
     // Output of encoder
 shoulderAbsoluteEncoder = new DutyCycleEncoder(Constants.shoulderAbsoluteEncoderPort);
 shoulderAbsoluteEncoder.configSensorDirection(false);
-shoulderAbsoluteEncoder.configMagnetOffset(0);
 shoulderAbsoluteEncoder.setDistancePerRotation(0.5);
+shoulderAbsoluteEncoder.setOffset(0);
 
     // Set motor types and feedback devices
     elevator.configFactoryDefault();
@@ -80,6 +75,8 @@ shoulderAbsoluteEncoder.setDistancePerRotation(0.5);
     wrist2.configReverseSoftLimitEnable(true);
     wrist2.setinverted(true);
     // Set neutral mode for motors
+   
+    
     shoulder.setNeutralMode(NeutralMode.Coast);
     elevator.setNeutralMode(NeutralMode.Brake);
     wrist.setNeutralMode(NeutralMode.Brake);
