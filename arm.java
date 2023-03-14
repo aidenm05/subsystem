@@ -19,7 +19,7 @@ public class Arm extends SubsystemBase {
   private WPI_TalonFX elevator;
   private WPI_TalonFX wrist;
   private WPI_TalonFX wrist2;
-  private DutyCycleEncoder shoulderAbsoluteEncoder;
+  private DutyCycleEncoder encoder;
   private DigitalInput bottomLimit;
   
   private static Arm instance;
@@ -29,23 +29,26 @@ public class Arm extends SubsystemBase {
     elevator = new WPI_TalonFX(Constants.elevatorID);
     wrist = new WPI_TalonFX(Constants.wristID);
     wrist2 = new WPI_TalonFX(Constants.wrist2ID);
-    shoulderAbsoluteEncoder = new DutyCycleEncoder(Constants.shoulderAbsoluteEncoderPort);
+    encoder = new DutyCycleEncoder(Constants.shoulderAbsoluteEncoderPort);
     bottomLimit = new DigitalInput(Constants.bottomLimitPort);
     
     // Set motor types and feedback devices
-    shoulder.configFactoryDefault();
-    shoulder.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
     elevator.configFactoryDefault();
     elevator.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
     wrist.configFactoryDefault();
     wrist.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
     wrist2.configFactoryDefault();
     wrist2.configSelectedFeedbackSensor(FeedbackDevice.IntegratedSensor);
+    shoulder.configFactoryDefault();
+
+encoder.configFactoryDefault();
+encoder.configAbsoluteSensorRange(AbsoluteSensorRange.Signed_PlusMinus180);
+encoder.setPosition(0.0);
+encoder.configSensorDirection(false);
+encoder.configMagnetOffset(-zero);
     
     // Set PIDF constants
-    shoulder.config_kP(0, Constants.shoulderKP);
-    shoulder.config_kI(0, Constants.shoulderKI);
-    shoulder.config_kD(0, Constants.shoulderKD);
+   
     elevator.config_kP(0, Constants.elevatorKP);
     elevator.config_kI(0, Constants.elevatorKI);
     elevator.config_kD(0, Constants.elevatorKD);
@@ -57,25 +60,22 @@ public class Arm extends SubsystemBase {
     wrist2.config_kD(0, Constants.wrist2KD);
     
     // Set soft limits and enable them
-    shoulder.configForwardSoftLimitThreshold(degreesToTicks(Constants.shoulderForwardSoftLimit));
+   
     elevator.configForwardSoftLimitThreshold(degreesToTicks(Constants.elevatorForwardSoftLimit));
     wrist.configForwardSoftLimitThreshold(degreesToTicks(Constants.wristForwardSoftLimit));
     wrist2.configForwardSoftLimitThreshold(degreesToTicks(Constants.wrist2ForwardSoftLimit));
-    shoulder.configReverseSoftLimitThreshold(degreesToTicks(Constants.shoulderReverseSoftLimit));
     elevator.configReverseSoftLimitThreshold(degreesToTicks(Constants.elevatorReverseSoftLimit));
     wrist.configReverseSoftLimitThreshold(degreesToTicks(Constants.wristReverseSoftLimit));
     wrist2.configReverseSoftLimitThreshold(degreesToTicks(Constants.wrist2ReverseSoftLimit));
-    shoulder.configForwardSoftLimitEnable(true);
     elevator.configForwardSoftLimitEnable(true);
     wrist.configForwardSoftLimitEnable(true);
     wrist2.configForwardSoftLimitEnable(true);
-    shoulder.configReverseSoftLimitEnable(true);
     elevator.configReverseSoftLimitEnable(true);
     wrist.configReverseSoftLimitEnable(true);
     wrist2.configReverseSoftLimitEnable(true);
     
     // Set neutral mode for motors
-    shoulder.setNeutralMode(NeutralMode.Brake);
+    shoulder.setNeutralMode(NeutralMode.Coast);
     elevator.setNeutralMode(NeutralMode.Brake);
     wrist.setNeutralMode(NeutralMode.Brake);
     wrist2.setNeutralMode(NeutralMode.Brake);
@@ -89,7 +89,7 @@ public class Arm extends SubsystemBase {
   }
   
   public double getShoulderPosition() {
-    return ticksToDegrees(shoulder.getSelectedSensorPosition());
+    return (encoder.getSelectedSensorPosition());
   }
   
   public double getElevatorPosition() {
