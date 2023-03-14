@@ -1,0 +1,96 @@
+private boolean isSlowModeEnabled = false;
+private boolean isRampEnabled = false;
+private final double SLOW_MODE_FACTOR = 0.5; // A factor to reduce the input values in slow mode
+private final double RAMP_RATE = 0.05; // The rate at which input values are ramped up or down
+
+private double xInputPrev = 0.0;
+private double yInputPrev = 0.0;
+
+public ChassisSpeeds getTargetSpeeds(double xInput, double yInput, double headingX, double headingY) {
+  // Apply slow mode scaling if enabled
+  if (isSlowModeEnabled) {
+    xInput *= SLOW_MODE_FACTOR;
+    yInput *= SLOW_MODE_FACTOR;
+  }
+
+  // Apply ramp up and down if enabled
+  if (isRampEnabled) {
+    xInput = rampInput(xInput, xInputPrev);
+    yInput = rampInput(yInput, yInputPrev);
+
+    xInputPrev = xInput;
+    yInputPrev = yInput;
+  } else {
+    xInputPrev = 0.0;
+    yInputPrev = 0.0;
+  }
+
+  // Apply cubic input scaling
+  xInput = Math.pow(xInput, 3);
+  yInput = Math.pow(yInput, 3);
+
+  // Get target speeds from swerveController
+  return swerveDrive.swerveController.getTargetSpeeds(xInput, yInput, headingX, headingY, getHeading().getRadians());
+}
+
+// Method to toggle slow mode on/off
+public void toggleSlowMode() {
+  isSlowModeEnabled = !isSlowModeEnabled;
+}
+
+// Method to toggle ramp up and down on/off
+public void toggleRamp() {
+  isRampEnabled = !isRampEnabled;
+}
+
+// Helper method to ramp up and down joystick inputs
+private double rampInput(double input, double prevInput) {
+  if (Math.abs(input - prevInput) > RAMP_RATE) {
+    if (input > prevInput) {
+      return prevInput + RAMP_RATE;
+    } else {
+      return prevInput - RAMP_RATE;
+    }
+  } else {
+    return input;
+  }
+}
+
+
+To add toggle buttons for both slow and ramp in RobotContainer and make them stay open when the button is pressed, you can create two ToggleButton instances and bind them to the appropriate commands.
+
+Here's an example implementation:
+
+java
+Copy code
+public class RobotContainer {
+  private final Joystick driverController = new Joystick(Constants.DRIVER_CONTROLLER_PORT);
+  private final SwerveDriveSubsystem swerveDrive = new SwerveDriveSubsystem();
+  private final Command teleopCommand = new SwerveDriveCommand(swerveDrive, driverController::getX, driverController::getY, driverController::getZ);
+
+  private final ToggleButton slowModeButton = new ToggleButton(driverController::getRawButtonPressed, Constants.SLOW_MODE_BUTTON);
+  private final ToggleButton rampButton = new ToggleButton(driverController::getRawButtonPressed, Constants.RAMP_BUTTON);
+
+  public RobotContainer() {
+    configureButtonBindings();
+    swerveDrive.setDefaultCommand(teleopCommand);
+  }
+
+  private void configureButtonBindings() {
+    slowModeButton.whenHeld(new InstantCommand(swerveDrive::toggleSlowMode, swerveDrive));
+    rampButton.whenHeld(new InstantCommand(swerveDrive::toggleRamp, swerveDrive));
+  }
+
+  public Command getAutonomousCommand() {
+    return null;
+  }
+}
+In this implementation, we added two ToggleButton instances slowModeButton and rampButton. These toggle buttons are constructed with a ButtonSupplier that checks if the button is pressed using the getRawButtonPressed() method.
+
+We then configure the button bindings in the configureButtonBindings() method. We use the whenHeld() method to bind each toggle button to an InstantCommand that calls the appropriate toggle method in the SwerveDriveSubsystem.
+
+Finally, we set the default command for the SwerveDriveSubsystem to teleopCommand and return null for the autonomous command since we don't have an autonomous mode implemented yet.
+
+With this implementation, the SwerveDriveSubsystem will toggle slow mode and ramp up and down when the respective toggle buttons are held down. The toggle buttons will stay on when pressed and turn off when released.
+
+
