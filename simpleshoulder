@@ -1,0 +1,39 @@
+public class MoveShoulderCommand extends CommandBase {
+  
+  private final Arm arm;
+  
+  public MoveShoulderCommand(final Arm arm) {
+    this.arm = arm;
+    addRequirements(arm);
+  }
+  
+  @Override
+  public void execute() {
+    arm.setShoulderSpeed(Constants.shoulderMotorSpeed);
+    SmartDashboard.putNumber("Shoulder Encoder", arm.getShoulderAbsoluteEncoderTicks());
+    SmartDashboard.putNumber("Shoulder Angle", arm.getShoulderAbsoluteEncoderAngle());
+  }
+  
+  @Override
+  public boolean isFinished() {
+    final double currentEncoder = arm.getShoulderAbsoluteEncoderTicks();
+    final double targetEncoder = 4000.0;
+    return currentEncoder >= targetEncoder;
+  }
+  
+  @Override
+  public void end(final boolean interrupted) {
+    arm.stopShoulder();
+  }
+  
+}
+// ```
+
+// You can adjust the `targetEncoder` value to set the desired absolute encoder value for the shoulder. You can schedule this command in your robot program using:
+
+// ```
+// final MoveShoulderCommand moveShoulderCommand = new MoveShoulderCommand(arm);
+// moveShoulderCommand.schedule();
+// ``` 
+
+// This command will run the shoulder motor until the absolute encoder value reaches the target value of 4000. You can monitor the encoder values on the SmartDashboard using the print statements in the `execute` method.

@@ -1,0 +1,57 @@
+public class MoveElevatorCommand extends CommandBase {
+  
+    private final Arm arm;
+    
+    public MoveElevatorCommand(final Arm arm) {
+      this.arm = arm;
+      addRequirements(arm);
+    }
+    
+    @Override
+    public void initialize() {
+      arm.resetElevator();
+    }
+    
+    @Override
+    public void execute() {
+      final double currentEncoder = arm.getElevatorIntegratedEncoderTicks();
+      final double targetEncoder = Constants.elevatorMiddlePositionTicks;
+      
+      // If the elevator is above the middle position, run the motor in reverse until the encoder value is close enough to the middle position
+      if (currentEncoder > targetEncoder + Constants.elevatorTolerance) {
+        arm.setElevatorSpeed(-Constants.elevatorMotorSpeed);
+      }
+      // If the elevator is below the middle position, run the motor in forward until the encoder value is close enough to the middle position
+      else if (currentEncoder < targetEncoder - Constants.elevatorTolerance) {
+        arm.setElevatorSpeed(Constants.elevatorMotorSpeed);
+      }
+      // If the elevator is at or very close to the middle position, stop the motor and lock the Falcon 500
+      else {
+        arm.stopElevator();
+        arm.lockElevator();
+      }
+      
+      SmartDashboard.putNumber("Elevator Encoder", currentEncoder);
+      SmartDashboard.putNumber("Elevator Angle", arm.getElevatorIntegratedEncoderAngle());
+    }
+    
+    @Override
+    public boolean isFinished() {
+      final double currentEncoder = arm.getElevatorIntegratedEncoderTicks();
+      final double targetEncoder = Constants.elevatorMiddlePositionTicks;
+      return Math.abs(currentEncoder - targetEncoder) <= Constants.elevatorTolerance;
+    }
+    
+  }
+//   ```
+  
+//   You can adjust the `targetEncoder` value to set the desired encoder value for the middle position of the elevator. The `Constants.elevatorTolerance` value sets how close the elevator needs to be to the target encoder value to be considered "in position". 
+  
+//   You can schedule this command in your robot program using:
+  
+//   ```
+//   final MoveElevatorCommand moveElevatorCommand = new MoveElevatorCommand(arm);
+//   moveElevatorCommand.schedule();
+//   ``` 
+  
+//   This command will move the elevator to the middle position and hold it there by keeping the motor at the encoder position and locking it. You can monitor the encoder values on the SmartDashboard using the print statements in the `execute` method.

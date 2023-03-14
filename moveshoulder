@@ -1,0 +1,43 @@
+public class MoveShoulderCommand extends CommandBase {
+  
+  private final Arm arm;
+  private final double targetAngle;
+  
+  public MoveShoulderCommand(final Arm arm, final double targetAngle) {
+    this.arm = arm;
+    this.targetAngle = targetAngle;
+    addRequirements(arm);
+  }
+  
+  @Override
+  public void initialize() {
+    arm.resetShoulder();
+  }
+  
+  @Override
+  public void execute() {
+    final double currentAngle = arm.getShoulderAbsoluteEncoderAngle();
+    final double error = targetAngle - currentAngle;
+    final double speed = error * Constants.shoulderKPAbsoluteEncoder;
+    arm.setShoulderSpeed(speed);
+    
+    SmartDashboard.putNumber("Shoulder Encoder", arm.getShoulderAbsoluteEncoderTicks());
+    SmartDashboard.putNumber("Shoulder Angle", currentAngle);
+    SmartDashboard.putNumber("Target Shoulder Angle", targetAngle);
+    SmartDashboard.putNumber("Shoulder Error", error);
+    SmartDashboard.putNumber("Shoulder Speed", speed);
+  }
+  
+  @Override
+  public boolean isFinished() {
+    final double currentAngle = arm.getShoulderAbsoluteEncoderAngle();
+    final double error = Math.abs(targetAngle - currentAngle);
+    return error <= Constants.shoulderTolerance;
+  }
+  
+  @Override
+  public void end(final boolean interrupted) {
+    arm.stopShoulder();
+  }
+  
+}

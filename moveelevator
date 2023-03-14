@@ -1,0 +1,70 @@
+public class MoveElevatorCommand extends CommandBase {
+  
+    private final Arm arm;
+    private final double targetAngle;
+    
+    public MoveElevatorCommand(final Arm arm, final double targetAngle) {
+      this.arm = arm;
+      this.targetAngle = targetAngle;
+      addRequirements(arm);
+    }
+    
+    @Override
+    public void execute() {
+      final double currentAngle = arm.getElevatorIntegratedEncoderAngle();
+      final double error = targetAngle - currentAngle;
+      final double speed = error * Constants.elevatorKP;
+      arm.setElevatorSpeed(speed);
+      
+      SmartDashboard.putNumber("Elevator Encoder", arm.getElevatorIntegratedEncoderTicks());
+      SmartDashboard.putNumber("Elevator Angle", currentAngle);
+      SmartDashboard.putNumber("Target Elevator Angle", targetAngle);
+      SmartDashboard.putNumber("Elevator Error", error);
+      SmartDashboard.putNumber("Elevator Speed", speed);
+    }
+    
+    @Override
+    public boolean isFinished() {
+      final double currentAngle = arm.getElevatorIntegratedEncoderAngle();
+      final double error = Math.abs(targetAngle - currentAngle);
+      return error <= Constants.elevatorTolerance;
+    }
+    
+    @Override
+    public void end(final boolean interrupted) {
+      arm.stopElevator();
+    }
+    
+  }
+// To use these commands, you can create an instance of the `ArmSubsystem` in your robot's `RobotContainer` class and call the `moveArm` method with the desired shoulder and elevator positions. For example:
+
+// public class RobotContainer {
+  
+//   private ArmSubsystem armSubsystem;
+  
+//   public RobotContainer() {
+//     armSubsystem = new ArmSubsystem();
+//     configureButtonBindings();
+//   }
+  
+//   private void configureButtonBindings() {
+//     new JoystickButton(driverController, Button.kX.value)
+//     .whileHeld(() -> armSubsystem.moveArm(90, 45)); // Move shoulder to 90 degrees and elevator to 45 degrees while button X is held
+//   }
+  
+// }
+
+// To use these commands, you can create instances of each command and schedule them when you need to move the shoulder or elevator. For example:
+
+// ```
+// final MoveShoulderCommand moveShoulderCommand = new MoveShoulderCommand(arm, 90);
+// final MoveElevatorCommand moveElevatorCommand = new MoveElevatorCommand(arm, 45);
+
+// // Move shoulder to 90 degrees
+// moveShoulderCommand.schedule();
+
+// // Wait for shoulder movement to complete before moving elevator
+// moveElevatorCommand.withTimeout(Constants.shoulderMovementTimeoutSeconds).schedule();
+// ``` 
+
+// You can adjust the values passed as arguments to the `MoveShoulderCommand` and `MoveElevatorCommand` constructors to move the arm to different positions. The `withTimeout` method on the `moveElevatorCommand` ensures that the command times out if the shoulder movement takes too long.
